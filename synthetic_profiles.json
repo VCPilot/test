@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Jane Doe",
+    "dob": "1989-02-12",
+    "creditScore": 720
+  },
+  {
+    "name": "Mark Li",
+    "dob": "1978-09-10",
+    "creditScore": 650
+  }
+]
