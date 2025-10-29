@@ -6,13 +6,15 @@ A Node.js Express API with a React front-end for issuing Verifiable Credentials 
 
 - Issues W3C Verifiable Credentials from synthetic profiles
 - Express REST API backend
-- React Wallet front-end with credential display
+- React Wallet front-end with credential card display
+- Firestore integration for saving credentials
 - CORS support for cross-origin requests
 
 ## Prerequisites
 
 - Node.js v22.21.0 or higher
 - npm
+- Firebase project (for Firestore integration)
 
 ## Installation
 
@@ -20,6 +22,22 @@ A Node.js Express API with a React front-end for issuing Verifiable Credentials 
 ```bash
 npm install
 ```
+
+## Firebase Setup
+
+1. Create a Firebase project at https://console.firebase.google.com/
+2. Enable Firestore Database in your Firebase project
+3. Create a `.env` file in the project root with your Firebase configuration:
+```env
+VITE_FIREBASE_API_KEY=your-api-key
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+VITE_FIREBASE_APP_ID=your-app-id
+```
+4. Get these values from: Firebase Console → Project Settings → General → Your apps
+5. Update `src/firebase.js` with your Firebase configuration or use environment variables
 
 ## Usage
 
@@ -48,7 +66,9 @@ The Wallet will be available at `http://localhost:3001`
 The Wallet includes:
 - A button to "Issue Credential"
 - Profile index selector
-- Display of the returned credential in JSON format
+- **Credential Card Display**: Shows name, date of birth, and credit score in a formatted card
+- **Firestore Integration**: Automatically saves credential JSON to Firestore when issued
+- Collapsible JSON view for full credential details
 
 ### Issue a Verifiable Credential
 

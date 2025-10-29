@@ -1,15 +1,20 @@
 import React, { useState } from 'react'
+import { db } from '../firebase'
+import { collection, addDoc, Timestamp } from 'firebase/firestore'
 
 function Wallet() {
   const [credential, setCredential] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const [profileIndex, setProfileIndex] = useState(0)
 
   const handleIssueCredential = async () => {
     setLoading(true)
     setError(null)
     setCredential(null)
+    setSaveSuccess(false)
 
     try {
       // Call local backend directly
@@ -24,11 +29,37 @@ function Wallet() {
       
       const data = await response.json()
       setCredential(data)
+      
+      // Save credential to Firestore
+      await saveToFirestore(data.credential)
     } catch (err) {
       setError(err.message || 'Failed to issue credential')
       console.error('Error:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const saveToFirestore = async (credentialJson) => {
+    try {
+      setSaving(true)
+      setSaveSuccess(false)
+      
+      await addDoc(collection(db, 'credentials'), {
+        credential: credentialJson,
+        issuedAt: Timestamp.now(),
+        issuer: credentialJson.issuer,
+        subjectId: credentialJson.credentialSubject?.id,
+        createdAt: new Date().toISOString()
+      })
+      
+      setSaveSuccess(true)
+      console.log('Credential saved to Firestore')
+    } catch (err) {
+      console.error('Error saving to Firestore:', err)
+      setError(`Failed to save to Firestore: ${err.message}`)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -66,25 +97,63 @@ function Wallet() {
         </div>
       )}
 
+      {saving && (
+        <div style={styles.savingMessage}>
+          Saving credential to Firestore...
+        </div>
+      )}
+
+      {saveSuccess && (
+        <div style={styles.successMessage}>
+          ✓ Credential saved to Firestore successfully!
+        </div>
+      )}
+
       {credential && (
         <div style={styles.credentialContainer}>
           <h2 style={styles.sectionTitle}>Issued Credential</h2>
           
-          <div style={styles.profileSection}>
-            <h3 style={styles.subtitle}>Profile</h3>
-            <div style={styles.profileInfo}>
-              <p><strong>Name:</strong> {credential.profile.name}</p>
-              <p><strong>Date of Birth:</strong> {credential.profile.dob}</p>
-              <p><strong>Credit Score:</strong> {credential.profile.creditScore}</p>
+          {/* Credential Card */}
+          <div style={styles.card}>
+            <div style={styles.cardHeader}>
+              <h3 style={styles.cardTitle}>Identity Credential</h3>
+              <div style={styles.cardBadge}>Verified</div>
+            </div>
+            
+            <div style={styles.cardBody}>
+              <div style={styles.cardField}>
+                <div style={styles.cardLabel}>Name</div>
+                <div style={styles.cardValue}>{credential.profile.name}</div>
+              </div>
+              
+              <div style={styles.cardField}>
+                <div style={styles.cardLabel}>Date of Birth</div>
+                <div style={styles.cardValue}>{credential.profile.dob}</div>
+              </div>
+              
+              <div style={styles.cardField}>
+                <div style={styles.cardLabel}>Credit Score</div>
+                <div style={styles.cardScore}>{credential.profile.creditScore}</div>
+              </div>
+            </div>
+            
+            <div style={styles.cardFooter}>
+              <div style={styles.cardIssuer}>
+                Issued by: {credential.credential.issuer}
+              </div>
+              <div style={styles.cardDate}>
+                {new Date(credential.credential.issuanceDate).toLocaleDateString()}
+              </div>
             </div>
           </div>
 
-          <div style={styles.credentialSection}>
-            <h3 style={styles.subtitle}>Verifiable Credential</h3>
+          {/* Credential JSON (collapsible) */}
+          <details style={styles.details}>
+            <summary style={styles.detailsSummary}>View Credential JSON</summary>
             <pre style={styles.json}>
               {JSON.stringify(credential.credential, null, 2)}
             </pre>
-          </div>
+          </details>
         </div>
       )}
     </div>
@@ -150,38 +219,123 @@ const styles = {
     marginBottom: '1rem',
     border: '1px solid #fcc',
   },
+  savingMessage: {
+    padding: '1rem',
+    backgroundColor: '#e7f3ff',
+    color: '#0066cc',
+    borderRadius: '6px',
+    marginBottom: '1rem',
+    border: '1px solid #b3d9ff',
+    textAlign: 'center',
+  },
+  successMessage: {
+    padding: '1rem',
+    backgroundColor: '#d4edda',
+    color: '#155724',
+    borderRadius: '6px',
+    marginBottom: '1rem',
+    border: '1px solid #c3e6cb',
+    textAlign: 'center',
+    fontWeight: '600',
+  },
   credentialContainer: {
     marginTop: '2rem',
-    padding: '1.5rem',
-    backgroundColor: '#f8f9fa',
-    borderRadius: '8px',
-    border: '1px solid #dee2e6',
   },
   sectionTitle: {
     fontSize: '1.5rem',
-    marginBottom: '1rem',
+    marginBottom: '1.5rem',
     color: '#333',
+    textAlign: 'center',
   },
-  subtitle: {
-    fontSize: '1.2rem',
-    marginBottom: '0.75rem',
-    color: '#555',
-  },
-  profileSection: {
-    marginBottom: '2rem',
-    padding: '1rem',
+  // Card styles
+  card: {
     backgroundColor: 'white',
-    borderRadius: '6px',
+    borderRadius: '12px',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)',
+    border: '1px solid #e5e7eb',
+    overflow: 'hidden',
+    marginBottom: '1.5rem',
+    maxWidth: '600px',
+    margin: '0 auto 1.5rem',
+  },
+  cardHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '1.5rem',
+    backgroundColor: '#f8f9fa',
+    borderBottom: '2px solid #e5e7eb',
+  },
+  cardTitle: {
+    fontSize: '1.25rem',
+    fontWeight: '700',
+    color: '#1f2937',
+    margin: 0,
+  },
+  cardBadge: {
+    padding: '0.25rem 0.75rem',
+    backgroundColor: '#10b981',
+    color: 'white',
+    borderRadius: '20px',
+    fontSize: '0.75rem',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  cardBody: {
+    padding: '2rem',
+  },
+  cardField: {
+    marginBottom: '1.5rem',
+    paddingBottom: '1.5rem',
+    borderBottom: '1px solid #f3f4f6',
+  },
+  cardLabel: {
+    fontSize: '0.875rem',
+    color: '#6b7280',
+    fontWeight: '500',
+    marginBottom: '0.5rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  },
+  cardValue: {
+    fontSize: '1.25rem',
+    color: '#111827',
+    fontWeight: '600',
+  },
+  cardScore: {
+    fontSize: '2rem',
+    color: '#059669',
+    fontWeight: '700',
+  },
+  cardFooter: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '1rem 1.5rem',
+    backgroundColor: '#f9fafb',
+    borderTop: '1px solid #e5e7eb',
+    fontSize: '0.875rem',
+    color: '#6b7280',
+  },
+  cardIssuer: {
+    fontWeight: '500',
+  },
+  cardDate: {
+    color: '#9ca3af',
+  },
+  details: {
+    marginTop: '1rem',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '8px',
     border: '1px solid #dee2e6',
-  },
-  profileInfo: {
-    lineHeight: '1.8',
-  },
-  credentialSection: {
     padding: '1rem',
-    backgroundColor: 'white',
-    borderRadius: '6px',
-    border: '1px solid #dee2e6',
+  },
+  detailsSummary: {
+    cursor: 'pointer',
+    fontWeight: '600',
+    color: '#007bff',
+    marginBottom: '0.5rem',
+    userSelect: 'none',
   },
   json: {
     backgroundColor: '#f8f9fa',
