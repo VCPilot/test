@@ -10,6 +10,7 @@ const app = express();
 const corsOptions = {
   origin: [
     'http://localhost:3000',
+    'http://localhost:3001',  // React dev server
     'https://vc-identity-pilot.web.app',
     'https://vc-identity-pilot.firebaseapp.com',
     process.env.FIREBASE_DOMAIN
