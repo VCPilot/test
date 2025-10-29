@@ -1,13 +1,13 @@
 # VC Identity Pilot
 
-A Node.js Express application for issuing Verifiable Credentials (W3C format) using the Veramo library.
+A Node.js Express API with a React front-end for issuing Verifiable Credentials (W3C format).
 
 ## Features
 
 - Issues W3C Verifiable Credentials from synthetic profiles
-- Uses Veramo library for credential issuance and signing
-- Local signing key management
-- Express REST API
+- Express REST API backend
+- React Wallet front-end with credential display
+- CORS support for cross-origin requests
 
 ## Prerequisites
 
@@ -23,7 +23,9 @@ npm install
 
 ## Usage
 
-### Start the server
+### Start the Backend Server
+
+In one terminal, start the Express API server:
 
 ```bash
 npm start
@@ -32,6 +34,21 @@ npm run dev
 ```
 
 The server will start on `http://localhost:3000`
+
+### Start the React Front-end (Wallet)
+
+In another terminal, start the React development server:
+
+```bash
+npm run client
+```
+
+The Wallet will be available at `http://localhost:3001`
+
+The Wallet includes:
+- A button to "Issue Credential"
+- Profile index selector
+- Display of the returned credential in JSON format
 
 ### Issue a Verifiable Credential
 
@@ -54,8 +71,9 @@ curl http://localhost:3000/health
 
 ## API Endpoints
 
-- `POST /issue` - Issue a Verifiable Credential
-  - Query parameter: `index` (optional, default: 0) - Profile index from synthetic_profiles.json
+- `GET /issue` or `POST /issue` - Issue a Verifiable Credential
+  - Query parameters: 
+    - `profile` or `index` (optional, default: 0) - Profile index from synthetic_profiles.json
   
 - `GET /health` - Health check endpoint
 

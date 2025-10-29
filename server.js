@@ -23,23 +23,14 @@ app.use(express.json());
 
 // Generate a local issuer DID
 const generateIssuerDID = () => {
-  const privateKey = crypto.randomBytes(32);
-  const publicKey = crypto.createPublicKey({
-    key: {
-      crv: 'secp256k1',
-      x: crypto.randomBytes(32).toString('hex'),
-      y: crypto.randomBytes(32).toString('hex')
-    },
-    format: 'jwk',
-    type: 'spki'
-  });
+  // Use a static DID for demo purposes (no key generation needed)
   return `did:web:issuer.local`;
 };
 
 const issuerDid = generateIssuerDID();
 
-// Issue credential endpoint
-app.post('/issue', async (req, res) => {
+// Issue credential handler (works for both GET and POST)
+const handleIssue = async (req, res) => {
   try {
     // Load synthetic profiles
     const profilesPath = path.join(__dirname, 'synthetic_profiles.json');
@@ -49,8 +40,8 @@ app.post('/issue', async (req, res) => {
       return res.status(400).json({ error: 'No profiles found' });
     }
 
-    // Get the profile index
-    const profileIndex = parseInt(req.query.index) || 0;
+    // Get the profile index (supports both 'profile' and 'index' query params)
+    const profileIndex = parseInt(req.query.profile) || parseInt(req.query.index) || 0;
     const profile = profiles[profileIndex];
     
     if (!profile) {
@@ -99,7 +90,11 @@ app.post('/issue', async (req, res) => {
     console.error('Error issuing credential:', error);
     res.status(500).json({ error: error.message });
   }
-});
+};
+
+// Support both GET and POST for /issue endpoint
+app.get('/issue', handleIssue);
+app.post('/issue', handleIssue);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -115,7 +110,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`VC Identity Pilot server running on http://localhost:${PORT}`);
   console.log(`Available endpoints:`);
-  console.log(`  POST /issue - Issue a Verifiable Credential`);
+  console.log(`  GET/POST /issue?profile=0 - Issue a Verifiable Credential`);
   console.log(`  GET  /health - Health check`);
 });
 
