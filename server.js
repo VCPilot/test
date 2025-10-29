@@ -92,6 +92,19 @@ const handleIssue = async (req, res) => {
   }
 };
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: 'VC Identity Pilot API',
+    version: '1.0.0',
+    endpoints: {
+      '/issue': 'Issue a Verifiable Credential (GET/POST) - Query params: profile or index (default: 0)',
+      '/health': 'Health check endpoint'
+    },
+    wallet: 'Open http://localhost:3001 for the Wallet UI'
+  });
+});
+
 // Support both GET and POST for /issue endpoint
 app.get('/issue', handleIssue);
 app.post('/issue', handleIssue);
