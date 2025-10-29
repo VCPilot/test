@@ -2,6 +2,10 @@ import React, { useState } from 'react'
 import { db } from '../firebase'
 import { collection, addDoc, Timestamp } from 'firebase/firestore'
 
+// Determine if we're running locally or deployed
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+const API_URL = isLocal ? 'http://localhost:3000' : 'http://localhost:3000' // For demo, API stays local
+
 function Wallet() {
   const [credential, setCredential] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -9,6 +13,7 @@ function Wallet() {
   const [error, setError] = useState(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [profileIndex, setProfileIndex] = useState(0)
+  const [apiStatus, setApiStatus] = useState('checking')
 
   const handleIssueCredential = async () => {
     setLoading(true)
@@ -19,8 +24,9 @@ function Wallet() {
     try {
       // Call local backend directly
       const url = profileIndex > 0 
-        ? `http://localhost:3000/issue?profile=${profileIndex}`
-        : `http://localhost:3000/issue`
+        ? `${API_URL}/issue?profile=${profileIndex}`
+        : `${API_URL}/issue`
+      
       const response = await fetch(url)
       
       if (!response.ok) {
@@ -33,7 +39,12 @@ function Wallet() {
       // Save credential to Firestore
       await saveToFirestore(data.credential)
     } catch (err) {
-      setError(err.message || 'Failed to issue credential')
+      if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+        setError('Cannot connect to issuer API. Is your local server running on port 3000?')
+        setApiStatus('offline')
+      } else {
+        setError(err.message || 'Failed to issue credential')
+      }
       console.error('Error:', err)
     } finally {
       setLoading(false)
@@ -68,9 +79,28 @@ function Wallet() {
     }
   }
 
+  // Check if API is reachable on mount
+  React.useEffect(() => {
+    fetch(`${API_URL}/health`)
+      .then(() => setApiStatus('online'))
+      .catch(() => setApiStatus('offline'))
+  }, [])
+
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>VC Identity Wallet</h1>
+      
+      {!isLocal && (
+        <div style={styles.apiWarning}>
+          <strong>💡 Demo Mode:</strong> This wallet is deployed on Firebase. 
+          {apiStatus === 'offline' && (
+            <span style={styles.offlineMessage}>
+              {' '}Connect to local issuer at <code>http://localhost:3000</code>
+            </span>
+          )}
+          {apiStatus === 'online' && ' Local issuer is reachable.'}
+        </div>
+      )}
       
       <div style={styles.controls}>
         <label style={styles.label}>
@@ -175,9 +205,23 @@ const styles = {
   title: {
     fontSize: '2.5rem',
     fontWeight: 'bold',
-    marginBottom: '2rem',
+    marginBottom: '1rem',
     color: '#333',
     textAlign: 'center',
+  },
+  apiWarning: {
+    padding: '1rem 1.5rem',
+    backgroundColor: '#fff4e6',
+    color: '#856404',
+    borderRadius: '6px',
+    marginBottom: '2rem',
+    border: '1px solid #ffe8cc',
+    textAlign: 'center',
+    fontSize: '0.95rem',
+  },
+  offlineMessage: {
+    color: '#d9480f',
+    fontWeight: '600',
   },
   controls: {
     display: 'flex',
