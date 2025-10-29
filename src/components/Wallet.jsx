@@ -12,7 +12,11 @@ function Wallet() {
     setCredential(null)
 
     try {
-      const response = await fetch(`http://localhost:3000/issue?profile=${profileIndex}`)
+      // Call local backend directly
+      const url = profileIndex > 0 
+        ? `http://localhost:3000/issue?profile=${profileIndex}`
+        : `http://localhost:3000/issue`
+      const response = await fetch(url)
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
