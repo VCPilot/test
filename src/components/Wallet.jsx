@@ -41,6 +41,11 @@ function Wallet() {
   }
 
   const saveToFirestore = async (credentialJson) => {
+    if (!db) {
+      console.warn('Firestore not configured. Credential will not be saved.')
+      return
+    }
+    
     try {
       setSaving(true)
       setSaveSuccess(false)
