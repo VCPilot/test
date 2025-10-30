@@ -4,7 +4,9 @@ import { collection, addDoc, Timestamp } from 'firebase/firestore'
 
 // Determine if we're running locally or deployed
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-const API_URL = isLocal ? 'http://localhost:3000' : 'http://localhost:3000' // For demo, API stays local
+// If deployed, use the same domain with /api prefix (Firebase Functions rewrite)
+// If local, use localhost:3000
+const API_URL = isLocal ? 'http://localhost:3000' : window.location.origin + '/api'
 
 function Wallet() {
   const [credential, setCredential] = useState(null)
@@ -94,18 +96,18 @@ function Wallet() {
         <div style={styles.apiWarning}>
           <strong>💡 Demo Mode:</strong> This wallet is deployed on Firebase.
           <br />
-          <strong>⚠️ To issue credentials:</strong> You need to run the local API server.
-          <br />
-          Clone the repo and run <code>npm start</code> in a terminal to start the issuer API on <code>localhost:3000</code>
+          <strong>📋 To issue credentials:</strong> 
+          <br />Option 1: Run local API - Clone the repo and run <code>npm start</code>
+          <br />Option 2: Upgrade to Blaze plan to deploy the API to Firebase Functions
           <br />
           {apiStatus === 'offline' && (
             <span style={styles.offlineMessage}>
-              Status: API server not reachable from this browser
+              Status: API not reachable (try Option 1)
             </span>
           )}
           {apiStatus === 'online' && (
             <span style={styles.onlineMessage}>
-              Status: API server is reachable
+              ✓ Status: API is reachable
             </span>
           )}
         </div>
