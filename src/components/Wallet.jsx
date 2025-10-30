@@ -92,13 +92,22 @@ function Wallet() {
       
       {!isLocal && (
         <div style={styles.apiWarning}>
-          <strong>💡 Demo Mode:</strong> This wallet is deployed on Firebase. 
+          <strong>💡 Demo Mode:</strong> This wallet is deployed on Firebase.
+          <br />
+          <strong>⚠️ To issue credentials:</strong> You need to run the local API server.
+          <br />
+          Clone the repo and run <code>npm start</code> in a terminal to start the issuer API on <code>localhost:3000</code>
+          <br />
           {apiStatus === 'offline' && (
             <span style={styles.offlineMessage}>
-              {' '}Connect to local issuer at <code>http://localhost:3000</code>
+              Status: API server not reachable from this browser
             </span>
           )}
-          {apiStatus === 'online' && ' Local issuer is reachable.'}
+          {apiStatus === 'online' && (
+            <span style={styles.onlineMessage}>
+              Status: API server is reachable
+            </span>
+          )}
         </div>
       )}
       
@@ -221,6 +230,10 @@ const styles = {
   },
   offlineMessage: {
     color: '#d9480f',
+    fontWeight: '600',
+  },
+  onlineMessage: {
+    color: '#059669',
     fontWeight: '600',
   },
   controls: {
