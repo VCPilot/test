@@ -30,6 +30,57 @@ const generateIssuerDID = () => {
 
 const issuerDid = generateIssuerDID();
 
+// Verify credential handler
+const handleVerify = async (req, res) => {
+  try {
+    const credential = req.body.credential || req.body;
+    
+    if (!credential) {
+      return res.status(400).json({ 
+        verified: false,
+        error: 'No credential provided' 
+      });
+    }
+
+    // Basic verification checks (structural validation)
+    const checks = {
+      hasContext: Array.isArray(credential['@context']) && credential['@context'].length > 0,
+      hasType: Array.isArray(credential.type) && credential.type.length > 0,
+      hasIssuer: typeof credential.issuer === 'string' && credential.issuer.length > 0,
+      hasIssuanceDate: typeof credential.issuanceDate === 'string',
+      hasCredentialSubject: typeof credential.credentialSubject === 'object',
+      hasProof: typeof credential.proof === 'object',
+      correctIssuer: credential.issuer === issuerDid,
+    };
+
+    // Check if all basic requirements are met
+    const allChecksPass = Object.values(checks).every(v => v === true);
+    
+    // For demo purposes, if issuer matches and structure is valid, consider it verified
+    // In production, you'd verify the cryptographic proof
+    const verificationResult = {
+      verified: allChecksPass,
+      checks: checks,
+      issuer: credential.issuer,
+      timestamp: new Date().toISOString(),
+    };
+
+    if (allChecksPass) {
+      verificationResult.message = 'Credential verified successfully';
+    } else {
+      verificationResult.message = 'Credential verification failed';
+    }
+
+    res.json(verificationResult);
+  } catch (error) {
+    console.error('Error verifying credential:', error);
+    res.status(500).json({ 
+      verified: false,
+      error: error.message 
+    });
+  }
+};
+
 // Issue credential handler (works for both GET and POST)
 const handleIssue = async (req, res) => {
   try {
@@ -100,6 +151,7 @@ app.get('/', (req, res) => {
     version: '1.0.0',
     endpoints: {
       '/issue': 'Issue a Verifiable Credential (GET/POST) - Query params: profile or index (default: 0)',
+      '/verify': 'Verify a Verifiable Credential (POST) - Send credential JSON in body',
       '/health': 'Health check endpoint'
     },
     wallet: 'Open http://localhost:3001 for the Wallet UI'
@@ -109,6 +161,9 @@ app.get('/', (req, res) => {
 // Support both GET and POST for /issue endpoint
 app.get('/issue', handleIssue);
 app.post('/issue', handleIssue);
+
+// Verify endpoint (POST only)
+app.post('/verify', handleVerify);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -125,6 +180,7 @@ app.listen(PORT, () => {
   console.log(`VC Identity Pilot server running on http://localhost:${PORT}`);
   console.log(`Available endpoints:`);
   console.log(`  GET/POST /issue?profile=0 - Issue a Verifiable Credential`);
+  console.log(`  POST /verify - Verify a Verifiable Credential`);
   console.log(`  GET  /health - Health check`);
 });
 
