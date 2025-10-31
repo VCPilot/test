@@ -55,7 +55,7 @@ function Wallet() {
 
   const saveToFirestore = async (credentialJson) => {
     if (!db) {
-      console.warn('Firestore not configured. Credential will not be saved.')
+      console.warn('Firestore not configured. Skipping save.')
       return
     }
     
@@ -73,9 +73,13 @@ function Wallet() {
       
       setSaveSuccess(true)
       console.log('Credential saved to Firestore')
+      
+      // Keep success message visible for 5 seconds
+      setTimeout(() => setSaveSuccess(false), 5000)
     } catch (err) {
       console.error('Error saving to Firestore:', err)
-      setError(`Failed to save to Firestore: ${err.message}`)
+      // Don't show error to user - just log it
+      console.warn('Firestore save failed, but credential was issued successfully')
     } finally {
       setSaving(false)
     }
