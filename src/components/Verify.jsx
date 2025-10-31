@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 // Determine if we're running locally or deployed
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -9,6 +9,15 @@ function Verify() {
   const [verificationResult, setVerificationResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  // Load credential from localStorage when component mounts
+  useEffect(() => {
+    const storedCredential = localStorage.getItem('credentialToVerify')
+    if (storedCredential) {
+      setCredentialJson(storedCredential)
+      localStorage.removeItem('credentialToVerify') // Clear after loading
+    }
+  }, [])
 
   const handleVerify = async () => {
     if (!credentialJson.trim()) {

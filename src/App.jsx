@@ -1,9 +1,19 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Wallet from './components/Wallet'
 import Verify from './components/Verify'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('wallet')
+
+  // Listen for navigation events from Wallet
+  useEffect(() => {
+    const handleNavigateToVerify = () => {
+      setCurrentPage('verify')
+    }
+    
+    window.addEventListener('navigateToVerify', handleNavigateToVerify)
+    return () => window.removeEventListener('navigateToVerify', handleNavigateToVerify)
+  }, [])
 
   return (
     <div className="App" style={{ minHeight: '100vh', padding: '20px' }}>

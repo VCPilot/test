@@ -204,6 +204,21 @@ function Wallet() {
               {JSON.stringify(credential.credential, null, 2)}
             </pre>
           </details>
+
+          {/* Verify Button */}
+          <div style={styles.verifyButtonContainer}>
+            <button
+              onClick={() => {
+                // Store credential JSON in localStorage
+                localStorage.setItem('credentialToVerify', JSON.stringify(credential.credential))
+                // Trigger navigation to Verify page
+                window.dispatchEvent(new Event('navigateToVerify'))
+              }}
+              style={styles.verifyButton}
+            >
+              Verify This Credential
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -414,6 +429,22 @@ const styles = {
     lineHeight: '1.5',
     border: '1px solid #dee2e6',
     maxHeight: '600px',
+  },
+  verifyButtonContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: '1rem',
+  },
+  verifyButton: {
+    padding: '0.75rem 2rem',
+    fontSize: '1rem',
+    fontWeight: '600',
+    backgroundColor: '#10b981',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
   },
 }
 
